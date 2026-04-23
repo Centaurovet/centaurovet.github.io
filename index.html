@@ -31,6 +31,9 @@
   <!-- Cor do tema usada por navegadores móveis na barra superior -->
   <meta name="theme-color" content="#3a2e1f">
   
+  <!-- Script do Beehiiv: carrega uma vez, redimensiona os iframes do formulário automaticamente -->
+  <script async src="https://subscribe-forms.beehiiv.com/embed.js"></script>
+  
   <style>
     /*
       ========================================================================
@@ -319,6 +322,26 @@
     
     /*
       ========================================================================
+      FORMULÁRIO BEEHIIV (iframe de captura de e-mail)
+      ========================================================================
+      O iframe do Beehiiv tem "mundo próprio" - o CSS da página não entra
+      nele. Esta classe só garante que o container se comporte bem no layout.
+    */
+    .formulario-beehiiv {
+      max-width: 480px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: center;
+    }
+    
+    .formulario-beehiiv iframe {
+      width: 100%;
+      max-width: 100%;
+      border: none;
+    }
+    
+    /*
+      ========================================================================
       RODAPÉ
       ========================================================================
     */
@@ -387,21 +410,21 @@
     </p>
     
     <!--
-      IMPORTANTE: este formulário está com "action" e "method" vazios por enquanto.
-      Quando você criar a newsletter no Beehiiv, eles vão te dar um código de
-      incorporação (embed) que substitui este formulário inteiro.
-      Por ora, o formulário não faz nada se alguém submeter — vamos integrar depois.
+      Formulário Beehiiv: o iframe abaixo é o formulário real de captura.
+      Quando o usuário digitar o e-mail e clicar em "Quero receber",
+      o endereço vai direto para a lista do Beehiiv.
+      O script carregado no <head> redimensiona este iframe automaticamente.
     -->
-    <form class="formulario" action="#" method="post">
-      <input
-        type="email"
-        name="email"
-        placeholder="seu@email.com"
-        required
-        aria-label="Seu endereço de e-mail"
-      >
-      <button type="submit">Quero receber</button>
-    </form>
+    <div class="formulario-beehiiv">
+      <iframe
+        src="https://subscribe-forms.beehiiv.com/880c245a-0ecc-4f3d-b0a1-6bf584cdb9cc"
+        class="beehiiv-embed"
+        data-test-id="beehiiv-embed"
+        frameborder="0"
+        scrolling="no"
+        style="width: 560px; height: 207px; margin: 0; border-radius: 0; background-color: transparent; box-shadow: 0 0 #0000; max-width: 100%;">
+      </iframe>
+    </div>
   </section>
   
   <!-- 3. MANIFESTO — os cinco atos -->
@@ -459,16 +482,17 @@
   <section class="captura-final">
     <p class="convite">Uma carta por mês. Densa, útil, sem enrolação.</p>
     
-    <form class="formulario" action="#" method="post">
-      <input
-        type="email"
-        name="email"
-        placeholder="seu@email.com"
-        required
-        aria-label="Seu endereço de e-mail"
-      >
-      <button type="submit">Quero receber</button>
-    </form>
+    <!-- Segunda captura: mesmo formulário Beehiiv da seção hero -->
+    <div class="formulario-beehiiv">
+      <iframe
+        src="https://subscribe-forms.beehiiv.com/880c245a-0ecc-4f3d-b0a1-6bf584cdb9cc"
+        class="beehiiv-embed"
+        data-test-id="beehiiv-embed"
+        frameborder="0"
+        scrolling="no"
+        style="width: 560px; height: 207px; margin: 0; border-radius: 0; background-color: transparent; box-shadow: 0 0 #0000; max-width: 100%;">
+      </iframe>
+    </div>
   </section>
   
   <!-- 7. RODAPÉ -->
