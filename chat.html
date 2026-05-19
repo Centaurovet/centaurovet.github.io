@@ -107,11 +107,14 @@
             body: JSON.stringify({ perfil: selectedProfile.id, mensagens: newMessages }),
           });
           if (res.status === 429) { setError("Muitas mensagens em pouco tempo. Aguarde um momento."); setLoading(false); return; }
-          if (!res.ok) throw new Error(`Erro ${res.status}`);
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.detail || `Erro ${res.status}`);
+          }
           const data = await res.json();
           setMessages([...newMessages, { role: "assistant", content: data.resposta }]);
-        } catch {
-          setError("Falha na conexão com o EquiVet IA. Tente novamente.");
+        } catch(e) {
+          setError(e.message || "Falha na conexão com o EquiVet IA. Tente novamente.");
         } finally {
           setLoading(false);
         }
