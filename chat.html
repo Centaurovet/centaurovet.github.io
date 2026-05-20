@@ -22,6 +22,7 @@
     const { useState, useRef, useEffect } = React;
 
     const BACKEND_URL = "https://web-production-2f5bf.up.railway.app";
+    const API_SECRET  = "COLOQUE_SEU_TOKEN_AQUI"; // mesmo valor de API_SECRET no Railway
 
     const PROFILES = [
       { id: "vet",     label: "Médico-Veterinário", icon: "⚕️", color: "#C9A84C", description: "Diagnóstico, farmacologia, protocolos clínicos" },
@@ -103,7 +104,7 @@
         try {
           const res = await fetch(`${BACKEND_URL}/chat`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json", "X-API-Key": API_SECRET },
             body: JSON.stringify({ perfil: selectedProfile.id, mensagens: newMessages }),
           });
           if (res.status === 429) { setError("Muitas mensagens em pouco tempo. Aguarde um momento."); setLoading(false); return; }

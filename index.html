@@ -351,6 +351,102 @@
     
     /*
       ========================================================================
+      SEÇÃO EQUIVET IA
+      ========================================================================
+    */
+    .equivet-ia {
+      padding: 72px 32px 80px;
+      background: var(--marrom);
+      color: var(--marfim);
+      text-align: center;
+    }
+
+    .equivet-ia .rubrica-ia {
+      font-size: 13px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--dourado);
+      margin-bottom: 16px;
+    }
+
+    .equivet-ia h2 {
+      font-size: 30px;
+      font-weight: 400;
+      color: var(--marfim);
+      margin-bottom: 12px;
+    }
+
+    .equivet-ia .ia-descricao {
+      font-size: 16px;
+      color: #c8b898;
+      max-width: 480px;
+      margin: 0 auto 40px;
+      line-height: 1.6;
+    }
+
+    .perfis-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      max-width: 520px;
+      margin: 0 auto 40px;
+    }
+
+    .perfil-card {
+      background: rgba(255,255,255,0.05);
+      border: 0.5px solid rgba(200,184,152,0.25);
+      padding: 18px 16px;
+      text-align: left;
+    }
+
+    .perfil-card .perfil-icon {
+      font-size: 22px;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .perfil-card .perfil-nome {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--dourado);
+      margin-bottom: 4px;
+    }
+
+    .perfil-card .perfil-desc {
+      font-size: 12px;
+      color: #8a7a6a;
+      line-height: 1.5;
+    }
+
+    .btn-chat {
+      display: inline-block;
+      padding: 14px 36px;
+      background: var(--dourado);
+      color: var(--marrom);
+      text-decoration: none;
+      font-family: Georgia, serif;
+      font-size: 15px;
+      letter-spacing: 0.06em;
+      transition: background 0.2s ease;
+    }
+
+    .btn-chat:hover {
+      background: #c8a050;
+    }
+
+    @media (max-width: 600px) {
+      .perfis-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .equivet-ia h2 {
+        font-size: 24px;
+      }
+    }
+
+    /*
+      ========================================================================
       RODAPÉ
       ========================================================================
     */
@@ -456,6 +552,38 @@
   <!-- Ornamento decorativo -->
   <div class="ornamento">⁂</div>
   
+  <!-- EquiVet IA -->
+  <section class="equivet-ia">
+    <p class="rubrica-ia">inteligência artificial</p>
+    <h2>EquiVet IA</h2>
+    <p class="ia-descricao">
+      Tire dúvidas sobre saúde, manejo e performance do seu cavalo com nosso assistente especializado. Quatro perfis: cada um fala a sua língua.
+    </p>
+    <div class="perfis-grid">
+      <div class="perfil-card">
+        <span class="perfil-icon">⚕️</span>
+        <div class="perfil-nome">Médico-Veterinário</div>
+        <div class="perfil-desc">Diagnóstico, farmacologia e protocolos clínicos</div>
+      </div>
+      <div class="perfil-card">
+        <span class="perfil-icon">🏡</span>
+        <div class="perfil-nome">Proprietário</div>
+        <div class="perfil-desc">Manejo, saúde e nutrição do seu cavalo</div>
+      </div>
+      <div class="perfil-card">
+        <span class="perfil-icon">🏇</span>
+        <div class="perfil-nome">Treinador</div>
+        <div class="perfil-desc">Performance, condicionamento e bem-estar atlético</div>
+      </div>
+      <div class="perfil-card">
+        <span class="perfil-icon">🔨</span>
+        <div class="perfil-nome">Ferrador</div>
+        <div class="perfil-desc">Casco, ferrageamento e claudicação</div>
+      </div>
+    </div>
+    <a href="/chat.html" class="btn-chat">Conversar com o EquiVet IA →</a>
+  </section>
+
   <!-- 4. QUEM ESCREVE -->
   <section class="quem-escreve">
     <!-- Placeholder do avatar — quando tiver foto, troque este div por: -->
@@ -509,11 +637,6 @@
   <!-- 7. RODAPÉ -->
   <footer class="rodape">
     Centaurovet · Scientia · Cura · Equus
-    <div style="margin-top: 16px;">
-      <a href="/chat.html" style="color: var(--dourado); font-size: 12px; letter-spacing: 0.15em; text-decoration: none; border: 0.5px solid var(--bege); padding: 8px 20px;">
-        EquiVet IA · Assistente clínico
-      </a>
-    </div>
   </footer>
 
 </body>
