@@ -96,6 +96,23 @@
   .qbtns button.mostrar{border-color:var(--gold);color:var(--gold)}
   .verso{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:14px;line-height:1.5;display:none;white-space:pre-wrap}
   .verso.show{display:block}
+  /* painel de desempenho */
+  #painelStats{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:2px}
+  #painelStats h3{margin:0 0 4px;font-size:14px;color:var(--gold);font-family:Georgia,serif}
+  #painelStats .resumo{font-size:12px;color:var(--muted);margin-bottom:8px}
+  .statRow{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid #1c1e24;font-size:13px;cursor:pointer}
+  .statRow .cnome{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .statRow .bar{flex:0 0 68px;height:6px;background:#0b0c0f;border-radius:4px;overflow:hidden}
+  .statRow .bar>i{display:block;height:100%}
+  .statRow .pct{flex:0 0 40px;text-align:right;font-weight:700}
+  .statRow .cnt{flex:0 0 auto;font-size:11px;color:var(--muted)}
+  .statActions{display:flex;gap:8px;margin-top:10px}
+  .statActions button{flex:1;border-radius:10px;padding:10px;font-size:13px;font-weight:700;border:1px solid var(--line);background:#0b0c0f;color:var(--txt)}
+  .statActions button.rev{border-color:var(--no);color:var(--no)}
+  .statActions button.rev:disabled{opacity:.45;border-color:var(--line);color:var(--muted)}
+  .statActions button.mais{border-color:var(--line);color:var(--muted)}
+  .statVazio{font-size:12px;color:var(--muted)}
+  .statZerar{font-size:11px;color:var(--muted);margin-top:8px;text-align:center;cursor:pointer}
 </style>
 </head>
 <body>
@@ -143,6 +160,7 @@
 <section id="estudar">
   <!-- configuração -->
   <div id="estCfg">
+    <div id="painelStats"></div>
     <div>
       <label>Formato</label>
       <div class="seg" id="segFmt">
@@ -196,6 +214,14 @@ const $ = id => document.getElementById(id);
 let fmt='multipla', nq=5;
 const capsSel = new Set();
 let respTotal=0, respAcertos=0, respFeitas=0;
+let quizCaps=[], quizModo='normal';
+const LS_STATS='insall_stats_v1', LS_ERR='insall_erros_v1';
+function lsGet(k,def){ try{ return JSON.parse(localStorage.getItem(k)) ?? def; }catch(e){ return def; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+function getStats(){ return lsGet(LS_STATS,{}); }
+function getErros(){ return lsGet(LS_ERR,[]); }
+function qidDe(it){ const s=(it.q||it.frente||'')+'|'+(it.pagina||''); let h=5381;
+  for(let i=0;i<s.length;i++){ h=((h<<5)+h+s.charCodeAt(i))>>>0; } return 'q'+h; }
 
 async function boot(){
   renderCaps('');
@@ -220,6 +246,7 @@ function troca(qual){
   $('estudar').style.display=c?'none':'flex';
   $('tabConsultar').classList.toggle('on',c);
   $('tabEstudar').classList.toggle('on',!c);
+  if(!c) renderStats();
 }
 
 // ── capítulos (busca + checkboxes) ──
@@ -290,7 +317,7 @@ async function perguntar(ev){
 }
 
 // ── ESTUDAR (gerar + quiz interativo) ──
-function voltarCfg(){ $('estQuiz').style.display='none'; $('estCfg').style.display='flex'; }
+function voltarCfg(){ $('estQuiz').style.display='none'; $('estCfg').style.display='flex'; renderStats(); }
 function atualizaScore(){
   $('score').textContent = respFeitas ? `${respAcertos}/${respFeitas} certos` : `0/${respTotal}`;
 }
@@ -304,6 +331,7 @@ async function gerar(){
     if(!tema){ $('estErr').textContent='Marque ao menos um capítulo ou digite um tema.'; return; }
     body.tema=tema;
   }
+  quizModo='normal'; quizCaps = capsSel.size ? [...capsSel] : [];
   $('btnGerar').disabled=true;
   const tk=await token(); if(!tk){ mostrarLogin(); return; }
   // mostra quiz view com loading
@@ -328,7 +356,12 @@ function renderQuiz(itens, formato){
   itens.forEach((it,i)=>{
     const card=document.createElement('div'); card.className='qcard';
     const num=`<div class="num">Questão ${i+1} de ${itens.length}</div>`;
-    if(formato==='multipla'){
+    const f = it._fmt || formato;
+    card.dataset.qid = qidDe(it);
+    card.dataset.fmt = f;
+    card.dataset.item = JSON.stringify(it);
+    card.dataset.caps = JSON.stringify(quizModo==='revisao' ? (it._caps||[]) : quizCaps);
+    if(f==='multipla'){
       const letras=['A','B','C','D'];
       const opts=letras.filter(L=>it.opcoes&&it.opcoes[L]!=null).map(L=>
         `<button class="opt" data-l="${L}" onclick="marcarMult(this)"><span class="letra">${L}</span>${esc(it.opcoes[L])}</button>`).join('');
@@ -336,7 +369,7 @@ function renderQuiz(itens, formato){
         `<div class="reveal"><span class="tag"></span><div class="exp"></div>${it.pagina?`<div class="pag">[Insall 6ª ed., p.${esc(String(it.pagina))}]</div>`:''}</div>`;
       card.dataset.correta = (it.correta||'').trim().toUpperCase();
       card.dataset.exp = it.explicacao||'';
-    } else if(formato==='flashcard'){
+    } else if(f==='flashcard'){
       card.innerHTML = num + `<div class="q">${esc(it.frente)}</div>` +
         `<div class="verso">${fmtHtml(it.verso)}${it.pagina?`<div class="pag" style="color:var(--gold);font-size:12px;margin-top:6px">[Insall 6ª ed., p.${esc(String(it.pagina))}]</div>`:''}</div>` +
         `<div class="qbtns"><button class="mostrar" onclick="mostrarVerso(this)">Mostrar resposta</button></div>`;
@@ -368,6 +401,7 @@ function marcarMult(btn){
   rev.querySelector('.exp').innerHTML = fmtHtml(card.dataset.exp);
   rev.classList.add('show');
   respFeitas++; if(acertou) respAcertos++; atualizaScore();
+  registrar(card, acertou);
 }
 
 function mostrarVerso(btn){
@@ -385,6 +419,78 @@ function autoAval(btn,acertou){
   btn.style.opacity='1';
   btn.parentElement.querySelectorAll('button').forEach(b=>{ if(b!==btn) b.style.opacity='.4'; });
   respFeitas++; if(acertou) respAcertos++; atualizaScore();
+  registrar(card, acertou);
+}
+
+// ── registro de desempenho (localStorage) ──
+function registrar(card, acertou){
+  const id=card.dataset.qid;
+  const caps=JSON.parse(card.dataset.caps||'[]');
+  if(caps.length){
+    const st=getStats();
+    caps.forEach(n=>{ st[n]=st[n]||{feitas:0,acertos:0}; st[n].feitas++; if(acertou) st[n].acertos++; });
+    lsSet(LS_STATS,st);
+  }
+  let err=getErros();
+  if(quizModo==='revisao'){
+    if(acertou){ lsSet(LS_ERR, err.filter(e=>e.id!==id)); }
+  }else if(!acertou){
+    if(!err.some(e=>e.id===id)){
+      const it=JSON.parse(card.dataset.item); it._caps=caps; it._fmt=card.dataset.fmt;
+      err.push({id, fmt:card.dataset.fmt, item:it, ts:Date.now()});
+      lsSet(LS_ERR,err);
+    }
+  }else if(err.some(e=>e.id===id)){
+    lsSet(LS_ERR, err.filter(e=>e.id!==id));
+  }
+}
+
+// ── painel de estatísticas ──
+function renderStats(){
+  const el=$('painelStats'); if(!el) return;
+  const st=getStats(), err=getErros();
+  const rows=Object.keys(st).map(n=>({n:+n, feitas:st[n].feitas, acertos:st[n].acertos,
+    pct: st[n].feitas ? st[n].acertos/st[n].feitas : 0})).filter(r=>r.feitas>0);
+  if(!rows.length && !err.length){
+    el.innerHTML='<h3>Meu desempenho</h3><div class="statVazio">Responda algumas questões (com capítulos marcados) para ver aqui onde você está mais fraco.</div>';
+    return;
+  }
+  rows.sort((a,b)=> a.pct-b.pct || b.feitas-a.feitas);
+  const totF=rows.reduce((a,r)=>a+r.feitas,0), totA=rows.reduce((a,r)=>a+r.acertos,0);
+  const capT=n=>{ const c=CAPS.find(x=>x.n===n); return c?c.t:''; };
+  const cor=p=> p<0.5?'var(--no)': p<0.75?'var(--gold)':'var(--ok)';
+  const linha=r=>`<div class="statRow" onclick="focarCap(${r.n})">
+      <span class="cnome">Cap. ${r.n} — ${esc(capT(r.n))}</span>
+      <span class="cnt">${r.acertos}/${r.feitas}</span>
+      <span class="bar"><i style="width:${Math.round(r.pct*100)}%;background:${cor(r.pct)}"></i></span>
+      <span class="pct" style="color:${cor(r.pct)}">${Math.round(r.pct*100)}%</span>
+    </div>`;
+  const todos = el.dataset.todos==='1';
+  const lista = todos ? rows : rows.slice(0,5);
+  el.innerHTML =
+    `<h3>Meu desempenho</h3>`+
+    `<div class="resumo">${totA}/${totF} certos${totF?` · ${Math.round(totA/totF*100)}% geral`:''} · ${rows.length} cap. estudado(s)${rows.length>1?' · do mais fraco ao topo':''}</div>`+
+    lista.map(linha).join('')+
+    `<div class="statActions">`+
+      `<button class="rev" ${err.length?'':'disabled'} onclick="revisarErros()">Revisar erros${err.length?` (${err.length})`:''}</button>`+
+      (rows.length>5?`<button class="mais" onclick="toggleTodos()">${todos?'Ver menos':`Ver todos (${rows.length})`}</button>`:'')+
+    `</div>`+
+    `<div class="statZerar" onclick="limparStats()">zerar estatísticas e erros</div>`;
+}
+function toggleTodos(){ const el=$('painelStats'); el.dataset.todos = el.dataset.todos==='1'?'0':'1'; renderStats(); }
+function focarCap(n){ capsSel.clear(); capsSel.add(n); $('capBusca').value=''; renderCaps(''); infoCaps();
+  $('temaInp').value=''; $('btnGerar').scrollIntoView({behavior:'smooth',block:'center'}); }
+function limparStats(){ if(confirm('Zerar todas as estatísticas e a lista de erros? Não dá para desfazer.')){
+  lsSet(LS_STATS,{}); lsSet(LS_ERR,[]); const el=$('painelStats'); el.dataset.todos='0'; renderStats(); } }
+
+// ── revisar erros ──
+function revisarErros(){
+  const err=getErros(); if(!err.length) return;
+  quizModo='revisao'; quizCaps=[];
+  const itens=err.map(e=>({...e.item, _fmt:e.fmt}));
+  $('estCfg').style.display='none'; $('estQuiz').style.display='flex';
+  $('score').textContent='';
+  renderQuiz(itens, 'multipla');
 }
 
 $('q').addEventListener('keydown', e=>{
