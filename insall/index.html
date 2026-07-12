@@ -13,25 +13,31 @@
   html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
   body{display:flex;flex-direction:column;min-height:100dvh}
-  header{padding:14px 16px calc(14px + env(safe-area-inset-top)) 16px;border-bottom:1px solid var(--line);
+  header{padding:12px 16px calc(10px + env(safe-area-inset-top)) 16px;border-bottom:1px solid var(--line);
     display:flex;align-items:center;gap:10px;position:sticky;top:0;background:var(--bg);z-index:5}
   header .logo{font-family:Georgia,serif;font-size:18px;color:var(--gold);font-weight:600}
   header .sub{font-size:11px;color:var(--muted);margin-top:2px}
   header .spacer{flex:1}
   header button.sair{background:none;border:1px solid var(--line);color:var(--muted);
     border-radius:8px;padding:6px 10px;font-size:12px}
+  /* tabs */
+  #tabs{display:none;border-bottom:1px solid var(--line);background:var(--bg)}
+  #tabs button{flex:1;background:none;border:none;color:var(--muted);padding:12px;font-size:14px;font-weight:600;
+    border-bottom:2px solid transparent}
+  #tabs button.on{color:var(--gold);border-bottom-color:var(--gold)}
   /* login */
   #login{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:24px;gap:14px}
   #login .box{width:100%;max-width:340px;background:var(--card);border:1px solid var(--line);
     border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:12px}
   #login h1{font-family:Georgia,serif;color:var(--gold);font-size:22px;margin:0 0 2px}
   #login p{color:var(--muted);font-size:13px;margin:0 0 8px}
-  input{width:100%;background:#0b0c0f;border:1px solid var(--line);color:var(--txt);
+  input,select{width:100%;background:#0b0c0f;border:1px solid var(--line);color:var(--txt);
     border-radius:10px;padding:13px 12px;font-size:16px}
-  input:focus{outline:none;border-color:var(--gold)}
+  input:focus,select:focus{outline:none;border-color:var(--gold)}
   button.primary{background:var(--gold);color:#1a1206;border:none;border-radius:10px;
     padding:13px;font-size:15px;font-weight:700}
   button.primary:active{opacity:.85}
+  button.primary:disabled{opacity:.5}
   .err{color:#e8836f;font-size:13px;min-height:16px}
   /* chat */
   #chat{flex:1;display:none;flex-direction:column;overflow:hidden}
@@ -48,6 +54,18 @@
   #q{flex:1;resize:none;max-height:120px;font-size:16px}
   form#ask button{background:var(--gold);color:#1a1206;border:none;border-radius:10px;width:52px;font-size:20px;font-weight:700}
   form#ask button:disabled{opacity:.4}
+  /* estudar */
+  #estudar{flex:1;display:none;flex-direction:column;overflow:hidden}
+  #estCfg{padding:16px;display:flex;flex-direction:column;gap:12px;border-bottom:1px solid var(--line);overflow-y:auto}
+  #estCfg label{font-size:12px;color:var(--muted);margin-bottom:-6px}
+  .seg{display:flex;gap:6px;flex-wrap:wrap}
+  .seg button{flex:1;min-width:calc(50% - 3px);background:#0b0c0f;border:1px solid var(--line);color:var(--txt);
+    border-radius:10px;padding:11px 8px;font-size:13px}
+  .seg button.on{background:var(--gold);color:#1a1206;border-color:var(--gold);font-weight:700}
+  .seg.small button{min-width:0}
+  #estOut{flex:1;overflow-y:auto;padding:16px;font-size:15px;line-height:1.55;white-space:pre-wrap;word-wrap:break-word}
+  #estOut strong{color:var(--gold)}
+  #estOut .cite{color:var(--gold)}
 </style>
 </head>
 <body>
@@ -59,6 +77,11 @@
   <div class="spacer"></div>
   <button class="sair" id="btnSair" style="display:none" onclick="sair()">Sair</button>
 </header>
+
+<div id="tabs">
+  <button id="tabConsultar" class="on" onclick="troca('consultar')">Consultar</button>
+  <button id="tabEstudar" onclick="troca('estudar')">Estudar</button>
+</div>
 
 <!-- LOGIN -->
 <section id="login">
@@ -74,7 +97,7 @@
   </div>
 </section>
 
-<!-- CHAT -->
+<!-- CONSULTAR -->
 <section id="chat">
   <div id="msgs">
     <div class="hint">Pergunte sobre o joelho — anatomia, técnicas, classificações, complicações.
@@ -86,50 +109,103 @@
   </form>
 </section>
 
+<!-- ESTUDAR -->
+<section id="estudar">
+  <div id="estCfg">
+    <div>
+      <label>Formato</label>
+      <div class="seg" id="segFmt">
+        <button data-v="multipla" class="on">Múltipla escolha</button>
+        <button data-v="dissertativa">Dissertativa</button>
+        <button data-v="flashcard">Flashcards</button>
+        <button data-v="caso">Caso clínico</button>
+      </div>
+    </div>
+    <div>
+      <label>Escopo</label>
+      <select id="capSel"></select>
+      <input id="temaInp" placeholder="…ou digite um tema livre (ex: menisco discoide)" style="margin-top:8px;display:none">
+    </div>
+    <div>
+      <label>Quantidade</label>
+      <div class="seg small" id="segN">
+        <button data-v="5" class="on">5</button>
+        <button data-v="10">10</button>
+        <button data-v="15">15</button>
+      </div>
+    </div>
+    <button class="primary" id="btnGerar" onclick="gerar()">Gerar questões</button>
+    <div class="err" id="estErr"></div>
+  </div>
+  <div id="estOut"><div class="hint">Escolha formato, capítulo (ou tema) e quantidade, depois toque em “Gerar questões”.</div></div>
+</section>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = 'https://lbtmdrhbhwvrytttevyw.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_w2ePaCDxExkCk4hKiszgyA_oQ6_rZt6';
 const BACKEND = 'https://web-production-2f5bf.up.railway.app';
+const CAPS=[{n:1,t:"Anatomy"},{n:2,t:"Anatomic Aberrations"},{n:3,t:"Clinical Examination Of The Knee"},{n:4,t:"Gene Therapy For The Treatment Of Knee Disorders"},{n:5,t:"Knee Imaging Techniques And Normal Anatomy"},{n:6,t:"Fractures"},{n:7,t:"Imaging Of The Meniscus"},{n:8,t:"Cruciate Ligaments"},{n:9,t:"Imaging Of Synovium And Cartilage Of The Knee"},{n:10,t:"Lateral Supporting Structures"},{n:11,t:"Medial Supporting Structures"},{n:12,t:"Imaging Of The Extensor Mechanism"},{n:13,t:"Imaging Of Total Knee Arthroplasty"},{n:14,t:"Tumors In The Knee"},{n:15,t:"Ultrasound-Guided Procedures"},{n:16,t:"Three-Dimensional Morphology Of The Knee"},{n:17,t:"Fluoroscopic Analysis Of Total Knee Replacement"},{n:18,t:"In Vivo Kinematics Of The Patellofemoral Joint"},{n:19,t:"Forward Solution Modeling: An In Vivo Theoretical Simulator Of The Knee"},{n:20,t:"Contact Mechanics Of The Human Knee"},{n:21,t:"In Vivo Mechanics And Vibration Of The Knee Joint"},{n:22,t:"A Finite Element Investigation Of Natural And Implanted Patellae"},{n:23,t:"Wear Simulation Of Knee Implants"},{n:24,t:"Knee Wear"},{n:25,t:"The Asian Knee"},{n:26,t:"Mobile Fluoroscopy: Determination Of Natural, Unrestricted Knee Motion"},{n:27,t:"Articular Cartilage: Biology, Biomechanics, And Healing Response"},{n:28,t:"Articular Cartilage Injury And Adult Osteochondritis Dissecans"},{n:29,t:"International Experience With Autologous Chondrocyte Implantation With Periosteum"},{n:30,t:"Osteochondral Autograft Transplantation"},{n:31,t:"Osteochondral Allograft Transplantation"},{n:32,t:"Articular Cartilage Repair With Bioscaffolds"},{n:33,t:"Management Of Failed Cartilage Repair"},{n:34,t:"Osteochondritis Dissecans Of The Knee In The Young Patient"},{n:35,t:"Secondary, Spontaneous, And Postarthroscopy Osteonecrosis Of The Knee"},{n:36,t:"Healing Of Knee Ligaments And Menisci"},{n:37,t:"Arthroscopic Meniscal Resection"},{n:38,t:"Arthroscopy-Assisted Inside-Out And Outside-In Meniscus Repair"},{n:39,t:"All-Inside Arthroscopic Meniscal Repair"},{n:40,t:"Meniscal Allograft Transplantation"},{n:41,t:"Synthetic Meniscal Substitutes And Collagen Scaffold"},{n:42,t:"Classification Of Knee Ligament Injuries"},{n:43,t:"Sports Knee Rating Systems And Related Statistics"},{n:44,t:"Medial Ligamentous Injuries Of The Knee: Acute And Chronic"},{n:45,t:"Fibular Collateral Ligament And The Posterolateral Corner"},{n:46,t:"Anterior Cruciate Ligament Injuries And Reconstruction"},{n:47,t:"Bptb Autograft Anterior Cruciate Ligament Reconstruction"},{n:48,t:"Anterior Cruciate Ligament Reconstruction With Hamstring Tendons"},{n:49,t:"Anterior Cruciate Ligament Reconstruction"},{n:50,t:"Allograft Anterior Cruciate Ligament Reconstruction"},{n:51,t:"Double-Bundle Anterior Cruciate Ligament Reconstruction"},{n:52,t:"Anterior Cruciate Ligament Reconstruction"},{n:53,t:"Complications Of Anterior Cruciate Ligament Reconstruction"},{n:54,t:"Revision Anterior Cruciate Ligament Reconstruction"},{n:55,t:"Revision Anterior Cruciate Ligament Surgery"},{n:56,t:"Osteotomy And The Cruciate-Deficient Knee"},{n:57,t:"Rehabilitation Of The Surgically Reconstructed Ligament"},{n:58,t:"Knee Bracing For Athletic Injuries"},{n:59,t:"Decision Making And Surgical Treatment Of Pcl Ruptures"},{n:60,t:"Posterior Cruciate Ligament Reconstruction: Posterior Inlay Technique"},{n:61,t:"Posterior Cruciate Ligament Reconstruction"},{n:62,t:"Posterior Cruciate Ligament Reconstruction"},{n:63,t:"The Dislocated Knee"},{n:64,t:"Dislocation Of The Proximal Tibiofibular Joint"},{n:65,t:"Disorders Of The Patellofemoral Joint"},{n:66,t:"Distal Realignment Of The Patellofemoral Joint"},{n:67,t:"Surgery Of The Patellofemoral Joint: Proximal Realignment"},{n:68,t:"Repair And Reconstruction Of The Medial Patellofemoral Ligament"},{n:69,t:"Sulcus-Deepening Trochleoplasty"},{n:70,t:"Quadriceps And Patellar Tendon Disruption"},{n:71,t:"Gout And Other Crystalline Arthropathies"},{n:72,t:"Knee Osteoarthritis"},{n:73,t:"Overview Of Psoriatic Arthritis"},{n:74,t:"Systemic Allergic Dermatitis In Total Knee Arthroplasty"},{n:75,t:"Rheumatoid Arthritis Of The Knee: Current Medical Management"},{n:76,t:"Hemophilia And Pigmented Villonodular Synovitis Hemophilia And The Knee"},{n:77,t:"Basics, Preoperative Assessment, And Medical Optimization"},{n:78,t:"Patients With Stents"},{n:79,t:"Diabetes Mellitus And The Knee"},{n:80,t:"Rheumatoid Arthritis"},{n:81,t:"Bilateral Total Knee Replacement"},{n:82,t:"Monitoring During Total Knee Arthroplasty"},{n:83,t:"Spinal Or General Anesthesia?"},{n:84,t:"Revision Total Knee Arthroplasties"},{n:85,t:"The Pneumatic Tourniquet"},{n:86,t:"Cement Embolism"},{n:87,t:"Tranexamic Acid"},{n:88,t:"Blood Loss And Fluid Management"},{n:89,t:"Anesthesia For Knee Surgery"},{n:90,t:"Specific Considerations For Fractures And Dislocations"},{n:91,t:"Femoral Nerve Block"},{n:92,t:"Adductor Canal Block"},{n:93,t:"Fascia Iliaca Compartment Block"},{n:94,t:"Psoas Compartment Block"},{n:95,t:"Sciatic Nerve Block"},{n:96,t:"Obturator Nerve Block"},{n:97,t:"Continuous Perineural Analgesia For Knee Surgery"},{n:98,t:"Local Anesthetic Infiltration"},{n:99,t:"Epidural Analgesia"},{n:100,t:"Neuraxial Opioids"},{n:101,t:"Systemic Opioids And Postoperative Nausea And Vomiting"},{n:102,t:"Multimodal Pharmacologic Analgesia"},{n:103,t:"Chronic Pain After Total Knee Arthroplasty"},{n:104,t:"Knee Arthroscopy"},{n:105,t:"Thromboprophylaxis And Neuraxial Anesthesia"},{n:106,t:"Soft Tissue Healing"},{n:107,t:"The Problem Wound: Coverage Options"},{n:108,t:"Distal Femur Fractures"},{n:109,t:"Tibial Plateau Fractures"},{n:110,t:"Fractures Of The Patella"},{n:111,t:"Treatment Of Periprosthetic Fractures Around A Total Knee Arthroplasty"},{n:112,t:"Normal Knee Embryology And Development"},{n:113,t:"Congenital Deformities Of The Knee"},{n:114,t:"Meniscal Disorders"},{n:115,t:"Osteochondritis Dissecans"},{n:116,t:"Reconstruction Of The Anterior Cruciate Ligament In Pediatric Patients"},{n:117,t:"Tibial Spine Fractures"},{n:118,t:"Physeal Fractures About The Knee"},{n:119,t:"Patellar Instability"},{n:120,t:"Nonoperative Treatment Of Knee Arthritis"},{n:121,t:"Osteotomies About The Knee"},{n:122,t:"Osteotomy For The Arthritic Knee: A European Perspective"},{n:123,t:"Scoring Systems And Their Validation For The Arthritic Knee"},{n:124,t:"Historic Development, Classification, & Characteristics Of Knee Prostheses"},{n:125,t:"Algorithm For Surgical Management"},{n:126,t:"Patellofemoral Arthroplasty"},{n:127,t:"Unicompartmental Knee Arthroplasty: A European Perspective"},{n:128,t:"Unicomparmental Knee Replacement With Acl Reconstruction"},{n:129,t:"Fixed-Bearing Medial Unicompartmental Knee Arthroplasty"},{n:130,t:"Medial Unicompartmental Knee Arthroplasty Mobile Bearing"},{n:131,t:"Bicompartmental Knee Arthroplasty"},{n:132,t:"Bicondylar Knee Replacement"},{n:133,t:"Bicruciate Total Knee Arthroplasty"},{n:134,t:"Bicruciate Total Knee Arthroplasty"},{n:135,t:"European Analysis And Results Of Partial Knee Replacement"},{n:136,t:"Posterior Cruciate Ligament Retention In Total Knee Arthroplasty"},{n:137,t:"Preserving The Posterior Cruciate Ligament"},{n:138,t:"Custom-Made Knee Replacements"},{n:139,t:"Posterior Cruciate Sacrificing Total Knee Arthroplasty"},{n:140,t:"Posterior Cruciate Ligament—Substituting Total Knee Arthroplasty"},{n:141,t:"Posterior Cruciate Ligament Substituting Total Knee Arthroplasty"},{n:142,t:"Mobile-Bearing Total Knee Arthroplasty"},{n:143,t:"Cemented Total Knee Arthroplasty: The Gold Standard"},{n:144,t:"Cementless Total Knee Arthroplasty"},{n:145,t:"Patellar Resurfacing In Total Knee Arthroplasty"},{n:146,t:"Patella Resurfacing—Never"},{n:147,t:"Patella Resurfacing—Always"},{n:148,t:"Alignment In Total Knee Arthroplasty"},{n:149,t:"Surgical Approaches In Total Knee Arthroplasty"},{n:150,t:"Surgical Techniques And Instrumentation In Total Knee Arthroplasty"},{n:151,t:"Gap-Balancing Techniques In Total Knee Arthroplasty"},{n:152,t:"Modern Measured Resection Technique"},{n:153,t:"The Understanding Of Gap Balancing And Measured Resection Techniques"},{n:154,t:"Mid-Flexion Instability After Total Knee Arthroplasty"},{n:155,t:"Correction Of Fixed Deformities With Total Knee Arthroplasty"},{n:156,t:"Correction Of Deformities With Total Knee Arthroplasty"},{n:157,t:"Pressure Sensors And Soft Tissue Balancing"},{n:158,t:"The Clinical Effectiveness Of Custom-Made Guides"},{n:159,t:"Computer Navigation In Primary Total Knee Arthroplasty"},{n:160,t:"Kinematically Aligned Total Knee Arthroplasty"},{n:161,t:"Computer-Assisted Navigation"},{n:162,t:"Robotics In Total Knee Arthroplasty"},{n:163,t:"Robotic Unicompartmental Knee Arthroplasty"},{n:164,t:"Management Of Extra-Articular Deformity In Tka With Navigation"},{n:165,t:"Computer-Assisted Total Knee Arthroplasty For Extramedullary Deformity"},{n:166,t:"Impact Of The Cavus Foot And Ankle On The Painful Knee"},{n:167,t:"Flat Foot And Its Effect On The Knee"},{n:168,t:"The Impact Of The Foot And Ankle On Total Knee Replacement"},{n:169,t:"Complications Of Total Knee Arthroplasty"},{n:170,t:"Extensile Exposures For Revision Total Knee Replacement"},{n:171,t:"Revision Of Aseptic Failed Total Knee Arthroplasty"},{n:172,t:"The Infected Total Knee Replacement"},{n:173,t:"Instability In Total Knee Arthroplasty"},{n:174,t:"Management Of Bone Defects In Revision Total Knee Arthroplasty"},{n:175,t:"Patellar Revision"},{n:176,t:"Patellar Fractures In Total Knee Arthroplasty"},{n:177,t:"Extensor Mechanism Disruption After Total Knee Arthroplasty"},{n:178,t:"Obesity: Risks Of Intervention, Benefits Of Optimization"},{n:179,t:"Pain Catastrophizers"},{n:180,t:"Medical Optimization Of Patients"},{n:181,t:"Decreasing The Risk Of Surgical Site Infections Following Tka"},{n:182,t:"Effects Of Prehabilitation, Falls, And Musculoskeletal Comorbidity"},{n:183,t:"Intra-Articular And Periarticular Injections"},{n:184,t:"Techniques And Eligibility"},{n:185,t:"Pain Management After Total Knee Arthroplasty Patients Leave The Hospital"},{n:186,t:"Continuous Passive Motion: Pros And Cons"},{n:187,t:"Cryotherapy After Total Knee Arthroplasty"},{n:188,t:"Immediate Motion Versus Splinting After Total Knee Arthroplasty"},{n:189,t:"Internet-Based Versus In-Person Physical Therapy"},{n:190,t:"Venous Thromboembolic Disease"},{n:191,t:"Accp, Scip, And Aaos Guidelines"},{n:192,t:"Aspirin And Sequential Pneumatic Compression Devices"},{n:193,t:"Venous Thromboembolic Disease Stratification Of Risk"},{n:194,t:"Bleeding And Infection Risk With Aggressive Anticoagulation"},{n:195,t:"Total Joint Arthroplasty—Historical Perspective"},{n:196,t:"Payment Paradigms"},{n:197,t:"Physician-Hospital Partnerships"},{n:198,t:"Value-Based Purchasing"},{n:199,t:"Quality Measures And Payment For Total Knee Replacement"},{n:200,t:"Evaluation Of The Patient With A Bone Lesion About The Knee"},{n:201,t:"Surgical Treatment Of Benign Bone Lesions"},{n:202,t:"Surgical Management Of Malignant Bone Tumors Around The Knee"},{n:203,t:"Allograft Prosthetic Composite Reconstruction Of The Knee"},{n:204,t:"Megaprostheses For Reconstruction Following Tumor Resection"},{n:205,t:"Metastatic Disease About The Knee: Evaluation And Surgical Treatment"},{n:206,t:"Soft Tissue Tumors Of The Knee"},{n:207,t:"Common Pitfalls In Tumors About The Knee"}];
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const $ = id => document.getElementById(id);
+let fmt='multipla', nq=5;
 
 async function boot(){
+  // popular capítulos
+  const sel=$('capSel');
+  sel.innerHTML='<option value="tema">— Tema livre —</option>' +
+    CAPS.map(c=>`<option value="${c.n}">Cap. ${c.n} — ${c.t}</option>`).join('');
+  sel.onchange=()=>{ $('temaInp').style.display = sel.value==='tema' ? 'block':'none'; };
+  // segmentos
+  $('segFmt').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    $('segFmt').querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); fmt=b.dataset.v;
+  });
+  $('segN').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    $('segN').querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); nq=parseInt(b.dataset.v);
+  });
   const { data:{ session } } = await sb.auth.getSession();
-  if (session) mostrarChat(); else mostrarLogin();
+  if (session) mostrarApp(); else mostrarLogin();
 }
-function mostrarLogin(){ $('login').style.display='flex'; $('chat').style.display='none'; $('btnSair').style.display='none'; }
-function mostrarChat(){ $('login').style.display='none'; $('chat').style.display='flex'; $('btnSair').style.display='block'; }
+function mostrarLogin(){ $('login').style.display='flex'; $('tabs').style.display='none';
+  $('chat').style.display='none'; $('estudar').style.display='none'; $('btnSair').style.display='none'; }
+function mostrarApp(){ $('login').style.display='none'; $('tabs').style.display='flex';
+  $('btnSair').style.display='block'; troca('consultar'); }
+function troca(qual){
+  const c=qual==='consultar';
+  $('chat').style.display=c?'flex':'none';
+  $('estudar').style.display=c?'none':'flex';
+  $('tabConsultar').classList.toggle('on',c);
+  $('tabEstudar').classList.toggle('on',!c);
+}
 
 async function entrar(){
   $('loginErr').textContent='';
   const email=$('email').value.trim(), senha=$('senha').value;
   if(!email||!senha){ $('loginErr').textContent='Preencha e-mail e senha.'; return; }
   const { error } = await sb.auth.signInWithPassword({ email, password:senha });
-  if(error){ $('loginErr').textContent = 'Falha no login. Confira os dados.'; return; }
-  mostrarChat();
+  if(error){ $('loginErr').textContent='Falha no login. Confira os dados.'; return; }
+  mostrarApp();
 }
 async function sair(){ await sb.auth.signOut(); location.reload(); }
-
 function autogrow(t){ t.style.height='auto'; t.style.height=Math.min(t.scrollHeight,120)+'px'; }
 
+function fmtHtml(texto){
+  return texto
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/(\[p\.[^\]]*\]|\[Insall[^\]]*\])/g,'<span class="cite">$1</span>');
+}
 function addMsg(texto, cls){
-  const d=document.createElement('div');
-  d.className='m '+cls;
-  if(cls==='a'){
-    // negrito **x** e destaca citações [Insall...]
-    let html = texto
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-      .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
-      .replace(/(\[Insall[^\]]*\])/g,'<span class="cite">$1</span>');
-    d.innerHTML=html;
-  } else { d.textContent=texto; }
-  const hint=document.querySelector('.hint'); if(hint) hint.remove();
-  $('msgs').appendChild(d);
-  $('msgs').scrollTop=$('msgs').scrollHeight;
+  const d=document.createElement('div'); d.className='m '+cls;
+  if(cls==='a'){ d.innerHTML=fmtHtml(texto); } else { d.textContent=texto; }
+  const hint=$('msgs').querySelector('.hint'); if(hint) hint.remove();
+  $('msgs').appendChild(d); $('msgs').scrollTop=$('msgs').scrollHeight;
   return d;
 }
+async function token(){ const { data:{ session } } = await sb.auth.getSession(); return session?.access_token; }
 
 async function perguntar(ev){
   ev.preventDefault();
@@ -137,35 +213,46 @@ async function perguntar(ev){
   $('q').value=''; autogrow($('q')); $('send').disabled=true;
   addMsg(q,'u');
   const load=addMsg('consultando o livro…','a'); load.classList.add('typing');
-
-  const { data:{ session } } = await sb.auth.getSession();
-  if(!session){ load.remove(); mostrarLogin(); return; }
-
+  const tk=await token(); if(!tk){ load.remove(); mostrarLogin(); return; }
   try{
-    const r = await fetch(BACKEND+'/insall',{
-      method:'POST',
-      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+session.access_token },
-      body: JSON.stringify({ pergunta:q })
-    });
-    const data = await r.json().catch(()=>({}));
-    load.remove();
-    if(!r.ok){
-      addMsg(data.detail || 'Erro ao consultar. Tente novamente.','a');
-    } else {
-      const el=addMsg(data.resposta || 'Sem resposta.','a');
-      if(!data.tem_literatura){
-        const w=document.createElement('div'); w.className='cite';
+    const r=await fetch(BACKEND+'/insall',{method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+tk},
+      body:JSON.stringify({pergunta:q})});
+    const data=await r.json().catch(()=>({})); load.remove();
+    if(!r.ok){ addMsg(data.detail||'Erro ao consultar.','a'); }
+    else{
+      const el=addMsg(data.resposta||'Sem resposta.','a');
+      if(!data.tem_literatura){ const w=document.createElement('div'); w.className='cite';
         w.style.marginTop='6px'; w.textContent='⚠︎ trecho do livro não recuperado — resposta pode ser incompleta';
-        el.appendChild(w);
-      }
+        el.appendChild(w); }
     }
-  }catch(e){
-    load.remove(); addMsg('Sem conexão com o servidor. Tente novamente.','a');
-  }
+  }catch(e){ load.remove(); addMsg('Sem conexão com o servidor.','a'); }
   $('send').disabled=false;
 }
 
-// enter envia, shift+enter quebra linha (em teclado físico)
+async function gerar(){
+  $('estErr').textContent='';
+  const sel=$('capSel').value;
+  const body={ formato:fmt, n:nq };
+  if(sel==='tema'){
+    const tema=$('temaInp').value.trim();
+    if(!tema){ $('estErr').textContent='Digite um tema ou escolha um capítulo.'; return; }
+    body.tema=tema;
+  } else { body.capitulo_num=parseInt(sel); }
+  $('btnGerar').disabled=true;
+  $('estOut').innerHTML='<div class="hint">Elaborando as questões a partir do livro… (pode levar ~20s)</div>';
+  const tk=await token(); if(!tk){ mostrarLogin(); return; }
+  try{
+    const r=await fetch(BACKEND+'/insall-quiz',{method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+tk},
+      body:JSON.stringify(body)});
+    const data=await r.json().catch(()=>({}));
+    if(!r.ok){ $('estOut').innerHTML='<div class="hint">'+(data.detail||'Erro ao gerar questões.')+'</div>'; }
+    else{ $('estOut').innerHTML=fmtHtml(data.questoes||'Sem questões.'); $('estOut').scrollTop=0; }
+  }catch(e){ $('estOut').innerHTML='<div class="hint">Sem conexão com o servidor.</div>'; }
+  $('btnGerar').disabled=false;
+}
+
 $('q').addEventListener('keydown', e=>{
   if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); $('ask').requestSubmit(); }
 });
