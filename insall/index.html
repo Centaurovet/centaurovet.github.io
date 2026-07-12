@@ -8,7 +8,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <title>Insall & Scott — Consulta</title>
 <style>
-  :root{ --bg:#0E0E0E; --card:#16171b; --line:#26282f; --gold:#d4a96a; --txt:#eceae4; --muted:#8b8d96; }
+  :root{ --bg:#0E0E0E; --card:#16171b; --line:#26282f; --gold:#d4a96a; --txt:#eceae4; --muted:#8b8d96;
+         --ok:#5fbf7f; --ok-bg:#12281a; --no:#e8836f; --no-bg:#2a1512; }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
   html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
@@ -20,12 +21,10 @@
   header .spacer{flex:1}
   header button.sair{background:none;border:1px solid var(--line);color:var(--muted);
     border-radius:8px;padding:6px 10px;font-size:12px}
-  /* tabs */
   #tabs{display:none;border-bottom:1px solid var(--line);background:var(--bg)}
   #tabs button{flex:1;background:none;border:none;color:var(--muted);padding:12px;font-size:14px;font-weight:600;
     border-bottom:2px solid transparent}
   #tabs button.on{color:var(--gold);border-bottom-color:var(--gold)}
-  /* login */
   #login{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:24px;gap:14px}
   #login .box{width:100%;max-width:340px;background:var(--card);border:1px solid var(--line);
     border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:12px}
@@ -39,7 +38,6 @@
   button.primary:active{opacity:.85}
   button.primary:disabled{opacity:.5}
   .err{color:#e8836f;font-size:13px;min-height:16px}
-  /* chat */
   #chat{flex:1;display:none;flex-direction:column;overflow:hidden}
   #msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px}
   .m{max-width:88%;padding:12px 14px;border-radius:14px;font-size:15px;line-height:1.5;white-space:pre-wrap;word-wrap:break-word}
@@ -47,7 +45,7 @@
   .m.a{align-self:flex-start;background:var(--card);border:1px solid var(--line)}
   .m.a strong{color:var(--gold)}
   .cite{color:var(--gold);font-size:12px}
-  .hint{color:var(--muted);font-size:13px;text-align:center;margin:auto;padding:20px;max-width:300px}
+  .hint{color:var(--muted);font-size:13px;text-align:center;margin:auto;padding:20px;max-width:320px}
   .typing{color:var(--muted);font-size:13px;font-style:italic}
   form#ask{display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));
     border-top:1px solid var(--line);background:var(--bg)}
@@ -56,16 +54,48 @@
   form#ask button:disabled{opacity:.4}
   /* estudar */
   #estudar{flex:1;display:none;flex-direction:column;overflow:hidden}
-  #estCfg{padding:16px;display:flex;flex-direction:column;gap:12px;border-bottom:1px solid var(--line);overflow-y:auto}
-  #estCfg label{font-size:12px;color:var(--muted);margin-bottom:-6px}
+  #estCfg{flex:1;padding:16px;display:flex;flex-direction:column;gap:14px;overflow-y:auto}
+  #estCfg label{font-size:12px;color:var(--muted);display:block;margin-bottom:6px}
   .seg{display:flex;gap:6px;flex-wrap:wrap}
   .seg button{flex:1;min-width:calc(50% - 3px);background:#0b0c0f;border:1px solid var(--line);color:var(--txt);
     border-radius:10px;padding:11px 8px;font-size:13px}
   .seg button.on{background:var(--gold);color:#1a1206;border-color:var(--gold);font-weight:700}
   .seg.small button{min-width:0}
-  #estOut{flex:1;overflow-y:auto;padding:16px;font-size:15px;line-height:1.55;white-space:pre-wrap;word-wrap:break-word}
-  #estOut strong{color:var(--gold)}
-  #estOut .cite{color:var(--gold)}
+  #capBusca{margin-bottom:8px}
+  #capLista{border:1px solid var(--line);border-radius:10px;max-height:240px;overflow-y:auto;background:#0b0c0f}
+  .capRow{display:flex;align-items:center;gap:10px;padding:11px 12px;border-bottom:1px solid #1c1e24;font-size:14px}
+  .capRow:last-child{border-bottom:none}
+  .capRow input{width:20px;height:20px;flex:0 0 auto;accent-color:var(--gold)}
+  .capRow span{flex:1}
+  .capSel{font-size:12px;color:var(--gold);margin-top:6px;min-height:16px}
+  .divisor{text-align:center;color:var(--muted);font-size:12px;margin:2px 0}
+  #estQuiz{flex:1;display:none;flex-direction:column;overflow:hidden}
+  #quizBar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line)}
+  #quizBar .voltar{background:none;border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:6px 10px;font-size:13px}
+  #quizBar .score{margin-left:auto;font-size:13px;color:var(--gold);font-weight:700}
+  #quizList{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:14px}
+  .qcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+  .qcard .num{font-size:12px;color:var(--muted);margin-bottom:6px}
+  .qcard .q{font-size:15px;line-height:1.5;margin-bottom:12px;white-space:pre-wrap}
+  .opt{display:block;width:100%;text-align:left;background:#0b0c0f;border:1px solid var(--line);color:var(--txt);
+    border-radius:10px;padding:12px;font-size:14px;margin-bottom:8px;line-height:1.4}
+  .opt.sel{border-color:var(--gold)}
+  .opt.ok{background:var(--ok-bg);border-color:var(--ok)}
+  .opt.no{background:var(--no-bg);border-color:var(--no)}
+  .opt .letra{color:var(--gold);font-weight:700;margin-right:6px}
+  .reveal{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:14px;line-height:1.5;display:none}
+  .reveal.show{display:block}
+  .reveal .tag{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;margin-bottom:6px}
+  .reveal .tag.ok{background:var(--ok-bg);color:var(--ok)}
+  .reveal .tag.no{background:var(--no-bg);color:var(--no)}
+  .reveal .pag{color:var(--gold);font-size:12px;margin-top:6px}
+  .qbtns{display:flex;gap:8px;margin-top:10px}
+  .qbtns button{flex:1;border-radius:10px;padding:11px;font-size:14px;font-weight:700;border:1px solid var(--line);background:#0b0c0f;color:var(--txt)}
+  .qbtns button.acertei{border-color:var(--ok);color:var(--ok)}
+  .qbtns button.errei{border-color:var(--no);color:var(--no)}
+  .qbtns button.mostrar{border-color:var(--gold);color:var(--gold)}
+  .verso{margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:14px;line-height:1.5;display:none;white-space:pre-wrap}
+  .verso.show{display:block}
 </style>
 </head>
 <body>
@@ -111,6 +141,7 @@
 
 <!-- ESTUDAR -->
 <section id="estudar">
+  <!-- configuração -->
   <div id="estCfg">
     <div>
       <label>Formato</label>
@@ -122,9 +153,15 @@
       </div>
     </div>
     <div>
-      <label>Escopo</label>
-      <select id="capSel"></select>
-      <input id="temaInp" placeholder="…ou digite um tema livre (ex: menisco discoide)" style="margin-top:8px;display:none">
+      <label>Capítulos (marque um ou vários)</label>
+      <input id="capBusca" placeholder="Buscar capítulo…" oninput="filtraCaps(this.value)">
+      <div id="capLista"></div>
+      <div class="capSel" id="capSelInfo">nenhum capítulo selecionado</div>
+    </div>
+    <div class="divisor">— ou —</div>
+    <div>
+      <label>Tema livre (usado se nenhum capítulo for marcado)</label>
+      <input id="temaInp" placeholder="ex: menisco discoide, lesão do canto posterolateral">
     </div>
     <div>
       <label>Quantidade</label>
@@ -137,7 +174,14 @@
     <button class="primary" id="btnGerar" onclick="gerar()">Gerar questões</button>
     <div class="err" id="estErr"></div>
   </div>
-  <div id="estOut"><div class="hint">Escolha formato, capítulo (ou tema) e quantidade, depois toque em “Gerar questões”.</div></div>
+  <!-- quiz interativo -->
+  <div id="estQuiz">
+    <div id="quizBar">
+      <button class="voltar" onclick="voltarCfg()">‹ Novo</button>
+      <div class="score" id="score"></div>
+    </div>
+    <div id="quizList"></div>
+  </div>
 </section>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -150,14 +194,11 @@ const CAPS=[{n:1,t:"Anatomy"},{n:2,t:"Anatomic Aberrations"},{n:3,t:"Clinical Ex
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 const $ = id => document.getElementById(id);
 let fmt='multipla', nq=5;
+const capsSel = new Set();
+let respTotal=0, respAcertos=0, respFeitas=0;
 
 async function boot(){
-  // popular capítulos
-  const sel=$('capSel');
-  sel.innerHTML='<option value="tema">— Tema livre —</option>' +
-    CAPS.map(c=>`<option value="${c.n}">Cap. ${c.n} — ${c.t}</option>`).join('');
-  sel.onchange=()=>{ $('temaInp').style.display = sel.value==='tema' ? 'block':'none'; };
-  // segmentos
+  renderCaps('');
   $('segFmt').querySelectorAll('button').forEach(b=>b.onclick=()=>{
     $('segFmt').querySelectorAll('button').forEach(x=>x.classList.remove('on'));
     b.classList.add('on'); fmt=b.dataset.v;
@@ -181,6 +222,24 @@ function troca(qual){
   $('tabEstudar').classList.toggle('on',!c);
 }
 
+// ── capítulos (busca + checkboxes) ──
+function renderCaps(filtro){
+  const f=(filtro||'').toLowerCase();
+  const lista=$('capLista');
+  const vis=CAPS.filter(c=> !f || ('cap '+c.n+' '+c.t).toLowerCase().includes(f));
+  lista.innerHTML = vis.slice(0,300).map(c=>`
+    <label class="capRow">
+      <input type="checkbox" value="${c.n}" ${capsSel.has(c.n)?'checked':''} onchange="toggleCap(${c.n},this.checked)">
+      <span>Cap. ${c.n} — ${c.t}</span>
+    </label>`).join('') || '<div class="capRow"><span style="color:var(--muted)">nada encontrado</span></div>';
+}
+function filtraCaps(v){ renderCaps(v); }
+function toggleCap(n,on){ if(on) capsSel.add(n); else capsSel.delete(n); infoCaps(); }
+function infoCaps(){
+  const arr=[...capsSel].sort((a,b)=>a-b);
+  $('capSelInfo').textContent = arr.length ? `${arr.length} selecionado(s): cap. ${arr.join(', ')}` : 'nenhum capítulo selecionado';
+}
+
 async function entrar(){
   $('loginErr').textContent='';
   const email=$('email').value.trim(), senha=$('senha').value;
@@ -191,10 +250,12 @@ async function entrar(){
 }
 async function sair(){ await sb.auth.signOut(); location.reload(); }
 function autogrow(t){ t.style.height='auto'; t.style.height=Math.min(t.scrollHeight,120)+'px'; }
+async function token(){ const { data:{ session } } = await sb.auth.getSession(); return session?.access_token; }
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
+// ── CONSULTAR ──
 function fmtHtml(texto){
-  return texto
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+  return esc(texto)
     .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
     .replace(/(\[p\.[^\]]*\]|\[Insall[^\]]*\])/g,'<span class="cite">$1</span>');
 }
@@ -205,8 +266,6 @@ function addMsg(texto, cls){
   $('msgs').appendChild(d); $('msgs').scrollTop=$('msgs').scrollHeight;
   return d;
 }
-async function token(){ const { data:{ session } } = await sb.auth.getSession(); return session?.access_token; }
-
 async function perguntar(ev){
   ev.preventDefault();
   const q=$('q').value.trim(); if(!q) return;
@@ -230,27 +289,102 @@ async function perguntar(ev){
   $('send').disabled=false;
 }
 
+// ── ESTUDAR (gerar + quiz interativo) ──
+function voltarCfg(){ $('estQuiz').style.display='none'; $('estCfg').style.display='flex'; }
+function atualizaScore(){
+  $('score').textContent = respFeitas ? `${respAcertos}/${respFeitas} certos` : `0/${respTotal}`;
+}
+
 async function gerar(){
   $('estErr').textContent='';
-  const sel=$('capSel').value;
   const body={ formato:fmt, n:nq };
-  if(sel==='tema'){
+  if(capsSel.size){ body.capitulos=[...capsSel]; }
+  else{
     const tema=$('temaInp').value.trim();
-    if(!tema){ $('estErr').textContent='Digite um tema ou escolha um capítulo.'; return; }
+    if(!tema){ $('estErr').textContent='Marque ao menos um capítulo ou digite um tema.'; return; }
     body.tema=tema;
-  } else { body.capitulo_num=parseInt(sel); }
+  }
   $('btnGerar').disabled=true;
-  $('estOut').innerHTML='<div class="hint">Elaborando as questões a partir do livro… (pode levar ~20s)</div>';
   const tk=await token(); if(!tk){ mostrarLogin(); return; }
+  // mostra quiz view com loading
+  $('estCfg').style.display='none'; $('estQuiz').style.display='flex';
+  $('score').textContent='';
+  $('quizList').innerHTML='<div class="hint">Elaborando as questões a partir do livro… (pode levar ~20-30s)</div>';
   try{
     const r=await fetch(BACKEND+'/insall-quiz',{method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+tk},
       body:JSON.stringify(body)});
     const data=await r.json().catch(()=>({}));
-    if(!r.ok){ $('estOut').innerHTML='<div class="hint">'+(data.detail||'Erro ao gerar questões.')+'</div>'; }
-    else{ $('estOut').innerHTML=fmtHtml(data.questoes||'Sem questões.'); $('estOut').scrollTop=0; }
-  }catch(e){ $('estOut').innerHTML='<div class="hint">Sem conexão com o servidor.</div>'; }
+    if(!r.ok){ $('quizList').innerHTML='<div class="hint">'+esc(data.detail||'Erro ao gerar questões.')+'</div>'; }
+    else if(!data.itens){ $('quizList').innerHTML='<div class="hint">'+fmtHtml(data.texto||'Sem questões.')+'</div>'; }
+    else{ renderQuiz(data.itens, data.formato); }
+  }catch(e){ $('quizList').innerHTML='<div class="hint">Sem conexão com o servidor.</div>'; }
   $('btnGerar').disabled=false;
+}
+
+function renderQuiz(itens, formato){
+  respTotal=itens.length; respAcertos=0; respFeitas=0; atualizaScore();
+  const wrap=$('quizList'); wrap.innerHTML='';
+  itens.forEach((it,i)=>{
+    const card=document.createElement('div'); card.className='qcard';
+    const num=`<div class="num">Questão ${i+1} de ${itens.length}</div>`;
+    if(formato==='multipla'){
+      const letras=['A','B','C','D'];
+      const opts=letras.filter(L=>it.opcoes&&it.opcoes[L]!=null).map(L=>
+        `<button class="opt" data-l="${L}" onclick="marcarMult(this)"><span class="letra">${L}</span>${esc(it.opcoes[L])}</button>`).join('');
+      card.innerHTML = num + `<div class="q">${esc(it.q)}</div>` + opts +
+        `<div class="reveal"><span class="tag"></span><div class="exp"></div>${it.pagina?`<div class="pag">[Insall 6ª ed., p.${esc(String(it.pagina))}]</div>`:''}</div>`;
+      card.dataset.correta = (it.correta||'').trim().toUpperCase();
+      card.dataset.exp = it.explicacao||'';
+    } else if(formato==='flashcard'){
+      card.innerHTML = num + `<div class="q">${esc(it.frente)}</div>` +
+        `<div class="verso">${fmtHtml(it.verso)}${it.pagina?`<div class="pag" style="color:var(--gold);font-size:12px;margin-top:6px">[Insall 6ª ed., p.${esc(String(it.pagina))}]</div>`:''}</div>` +
+        `<div class="qbtns"><button class="mostrar" onclick="mostrarVerso(this)">Mostrar resposta</button></div>`;
+    } else { // dissertativa | caso
+      card.innerHTML = num + `<div class="q">${esc(it.q)}</div>` +
+        `<div class="verso"><strong style="color:var(--gold)">Gabarito:</strong> ${fmtHtml(it.gabarito)}${it.pagina?`<div class="pag" style="color:var(--gold);font-size:12px;margin-top:6px">[Insall 6ª ed., p.${esc(String(it.pagina))}]</div>`:''}</div>` +
+        `<div class="qbtns"><button class="mostrar" onclick="mostrarVerso(this)">Ver gabarito</button></div>`;
+    }
+    wrap.appendChild(card);
+  });
+  wrap.scrollTop=0;
+}
+
+function marcarMult(btn){
+  const card=btn.closest('.qcard');
+  if(card.dataset.done) return;               // já respondida
+  card.dataset.done='1';
+  const correta=card.dataset.correta;
+  const escolhida=btn.dataset.l;
+  card.querySelectorAll('.opt').forEach(o=>{
+    o.style.pointerEvents='none';
+    if(o.dataset.l===correta) o.classList.add('ok');
+    if(o.dataset.l===escolhida && escolhida!==correta) o.classList.add('no');
+  });
+  const rev=card.querySelector('.reveal'); const tag=rev.querySelector('.tag');
+  const acertou = escolhida===correta;
+  tag.textContent = acertou?'✓ Correto':'✗ Incorreto';
+  tag.className='tag '+(acertou?'ok':'no');
+  rev.querySelector('.exp').innerHTML = fmtHtml(card.dataset.exp);
+  rev.classList.add('show');
+  respFeitas++; if(acertou) respAcertos++; atualizaScore();
+}
+
+function mostrarVerso(btn){
+  const card=btn.closest('.qcard');
+  card.querySelector('.verso').classList.add('show');
+  btn.parentElement.innerHTML =
+    `<button class="acertei" onclick="autoAval(this,true)">Acertei</button>`+
+    `<button class="errei" onclick="autoAval(this,false)">Errei</button>`;
+}
+function autoAval(btn,acertou){
+  const card=btn.closest('.qcard');
+  if(card.dataset.done) return;
+  card.dataset.done='1';
+  btn.parentElement.querySelectorAll('button').forEach(b=>b.style.pointerEvents='none');
+  btn.style.opacity='1';
+  btn.parentElement.querySelectorAll('button').forEach(b=>{ if(b!==btn) b.style.opacity='.4'; });
+  respFeitas++; if(acertou) respAcertos++; atualizaScore();
 }
 
 $('q').addEventListener('keydown', e=>{
