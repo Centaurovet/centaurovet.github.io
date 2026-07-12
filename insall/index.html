@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0E0E0E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>Insall & Scott — Consulta</title>
+<style>
+  :root{ --bg:#0E0E0E; --card:#16171b; --line:#26282f; --gold:#d4a96a; --txt:#eceae4; --muted:#8b8d96; }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  body{display:flex;flex-direction:column;min-height:100dvh}
+  header{padding:14px 16px calc(14px + env(safe-area-inset-top)) 16px;border-bottom:1px solid var(--line);
+    display:flex;align-items:center;gap:10px;position:sticky;top:0;background:var(--bg);z-index:5}
+  header .logo{font-family:Georgia,serif;font-size:18px;color:var(--gold);font-weight:600}
+  header .sub{font-size:11px;color:var(--muted);margin-top:2px}
+  header .spacer{flex:1}
+  header button.sair{background:none;border:1px solid var(--line);color:var(--muted);
+    border-radius:8px;padding:6px 10px;font-size:12px}
+  /* login */
+  #login{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:24px;gap:14px}
+  #login .box{width:100%;max-width:340px;background:var(--card);border:1px solid var(--line);
+    border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:12px}
+  #login h1{font-family:Georgia,serif;color:var(--gold);font-size:22px;margin:0 0 2px}
+  #login p{color:var(--muted);font-size:13px;margin:0 0 8px}
+  input{width:100%;background:#0b0c0f;border:1px solid var(--line);color:var(--txt);
+    border-radius:10px;padding:13px 12px;font-size:16px}
+  input:focus{outline:none;border-color:var(--gold)}
+  button.primary{background:var(--gold);color:#1a1206;border:none;border-radius:10px;
+    padding:13px;font-size:15px;font-weight:700}
+  button.primary:active{opacity:.85}
+  .err{color:#e8836f;font-size:13px;min-height:16px}
+  /* chat */
+  #chat{flex:1;display:none;flex-direction:column;overflow:hidden}
+  #msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px}
+  .m{max-width:88%;padding:12px 14px;border-radius:14px;font-size:15px;line-height:1.5;white-space:pre-wrap;word-wrap:break-word}
+  .m.u{align-self:flex-end;background:#20222a;border:1px solid var(--line)}
+  .m.a{align-self:flex-start;background:var(--card);border:1px solid var(--line)}
+  .m.a strong{color:var(--gold)}
+  .cite{color:var(--gold);font-size:12px}
+  .hint{color:var(--muted);font-size:13px;text-align:center;margin:auto;padding:20px;max-width:300px}
+  .typing{color:var(--muted);font-size:13px;font-style:italic}
+  form#ask{display:flex;gap:8px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+    border-top:1px solid var(--line);background:var(--bg)}
+  #q{flex:1;resize:none;max-height:120px;font-size:16px}
+  form#ask button{background:var(--gold);color:#1a1206;border:none;border-radius:10px;width:52px;font-size:20px;font-weight:700}
+  form#ask button:disabled{opacity:.4}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <div class="logo">Insall &amp; Scott</div>
+    <div class="sub">Surgery of the Knee · 6ª ed.</div>
+  </div>
+  <div class="spacer"></div>
+  <button class="sair" id="btnSair" style="display:none" onclick="sair()">Sair</button>
+</header>
+
+<!-- LOGIN -->
+<section id="login">
+  <div class="box">
+    <div>
+      <h1>Consulta</h1>
+      <p>Acesso pessoal. Use sua conta EquiVet.</p>
+    </div>
+    <input id="email" type="email" inputmode="email" autocomplete="username" placeholder="e-mail">
+    <input id="senha" type="password" autocomplete="current-password" placeholder="senha">
+    <button class="primary" onclick="entrar()">Entrar</button>
+    <div class="err" id="loginErr"></div>
+  </div>
+</section>
+
+<!-- CHAT -->
+<section id="chat">
+  <div id="msgs">
+    <div class="hint">Pergunte sobre o joelho — anatomia, técnicas, classificações, complicações.
+      As respostas citam capítulo e página do livro.</div>
+  </div>
+  <form id="ask" onsubmit="perguntar(event)">
+    <textarea id="q" rows="1" placeholder="Sua pergunta…" oninput="autogrow(this)"></textarea>
+    <button type="submit" id="send">➤</button>
+  </form>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://lbtmdrhbhwvrytttevyw.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_w2ePaCDxExkCk4hKiszgyA_oQ6_rZt6';
+const BACKEND = 'https://web-production-2f5bf.up.railway.app';
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const $ = id => document.getElementById(id);
+
+async function boot(){
+  const { data:{ session } } = await sb.auth.getSession();
+  if (session) mostrarChat(); else mostrarLogin();
+}
+function mostrarLogin(){ $('login').style.display='flex'; $('chat').style.display='none'; $('btnSair').style.display='none'; }
+function mostrarChat(){ $('login').style.display='none'; $('chat').style.display='flex'; $('btnSair').style.display='block'; }
+
+async function entrar(){
+  $('loginErr').textContent='';
+  const email=$('email').value.trim(), senha=$('senha').value;
+  if(!email||!senha){ $('loginErr').textContent='Preencha e-mail e senha.'; return; }
+  const { error } = await sb.auth.signInWithPassword({ email, password:senha });
+  if(error){ $('loginErr').textContent = 'Falha no login. Confira os dados.'; return; }
+  mostrarChat();
+}
+async function sair(){ await sb.auth.signOut(); location.reload(); }
+
+function autogrow(t){ t.style.height='auto'; t.style.height=Math.min(t.scrollHeight,120)+'px'; }
+
+function addMsg(texto, cls){
+  const d=document.createElement('div');
+  d.className='m '+cls;
+  if(cls==='a'){
+    // negrito **x** e destaca citações [Insall...]
+    let html = texto
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+      .replace(/(\[Insall[^\]]*\])/g,'<span class="cite">$1</span>');
+    d.innerHTML=html;
+  } else { d.textContent=texto; }
+  const hint=document.querySelector('.hint'); if(hint) hint.remove();
+  $('msgs').appendChild(d);
+  $('msgs').scrollTop=$('msgs').scrollHeight;
+  return d;
+}
+
+async function perguntar(ev){
+  ev.preventDefault();
+  const q=$('q').value.trim(); if(!q) return;
+  $('q').value=''; autogrow($('q')); $('send').disabled=true;
+  addMsg(q,'u');
+  const load=addMsg('consultando o livro…','a'); load.classList.add('typing');
+
+  const { data:{ session } } = await sb.auth.getSession();
+  if(!session){ load.remove(); mostrarLogin(); return; }
+
+  try{
+    const r = await fetch(BACKEND+'/insall',{
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+session.access_token },
+      body: JSON.stringify({ pergunta:q })
+    });
+    const data = await r.json().catch(()=>({}));
+    load.remove();
+    if(!r.ok){
+      addMsg(data.detail || 'Erro ao consultar. Tente novamente.','a');
+    } else {
+      const el=addMsg(data.resposta || 'Sem resposta.','a');
+      if(!data.tem_literatura){
+        const w=document.createElement('div'); w.className='cite';
+        w.style.marginTop='6px'; w.textContent='⚠︎ trecho do livro não recuperado — resposta pode ser incompleta';
+        el.appendChild(w);
+      }
+    }
+  }catch(e){
+    load.remove(); addMsg('Sem conexão com o servidor. Tente novamente.','a');
+  }
+  $('send').disabled=false;
+}
+
+// enter envia, shift+enter quebra linha (em teclado físico)
+$('q').addEventListener('keydown', e=>{
+  if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); $('ask').requestSubmit(); }
+});
+boot();
+</script>
+</body>
+</html>
