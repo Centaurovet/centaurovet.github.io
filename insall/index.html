@@ -69,6 +69,14 @@
   .capRow span{flex:1}
   .capSel{font-size:12px;color:var(--gold);margin-top:6px;min-height:16px}
   .divisor{text-align:center;color:var(--muted);font-size:12px;margin:2px 0}
+  /* resumo */
+  #resumo{flex:1;display:none;flex-direction:column;overflow:hidden}
+  #resCfg{flex:1;padding:16px;display:flex;flex-direction:column;gap:14px;overflow-y:auto}
+  #resView{flex:1;display:none;flex-direction:column;overflow:hidden}
+  #resBar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line)}
+  #resOut{flex:1;overflow-y:auto;padding:16px}
+  .resumoTxt{font-size:15px;line-height:1.65;white-space:pre-wrap}
+  .resumoTxt strong{color:var(--gold)}
   #estQuiz{flex:1;display:none;flex-direction:column;overflow:hidden}
   #quizBar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line)}
   #quizBar .voltar{background:none;border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:6px 10px;font-size:13px}
@@ -127,6 +135,7 @@
 
 <div id="tabs">
   <button id="tabConsultar" class="on" onclick="troca('consultar')">Consultar</button>
+  <button id="tabResumo" onclick="troca('resumo')">Resumo</button>
   <button id="tabEstudar" onclick="troca('estudar')">Estudar</button>
 </div>
 
@@ -154,6 +163,42 @@
     <textarea id="q" rows="1" placeholder="Sua pergunta…" oninput="autogrow(this)"></textarea>
     <button type="submit" id="send">➤</button>
   </form>
+</section>
+
+<!-- RESUMO -->
+<section id="resumo">
+  <!-- configuração -->
+  <div id="resCfg">
+    <div>
+      <label>Capítulos (marque um ou vários)</label>
+      <input id="resCapBusca" placeholder="Buscar capítulo…" oninput="filtraResCaps(this.value)">
+      <div id="resCapLista"></div>
+      <div class="capSel" id="resCapSelInfo">nenhum capítulo selecionado</div>
+    </div>
+    <div class="divisor">— ou —</div>
+    <div>
+      <label>Tema livre (usado se nenhum capítulo for marcado)</label>
+      <input id="resTemaInp" placeholder="ex: menisco discoide, lesão do canto posterolateral">
+    </div>
+    <div>
+      <label>Extensão</label>
+      <div class="seg small" id="segExt">
+        <button data-v="curto">Curto</button>
+        <button data-v="medio" class="on">Médio</button>
+        <button data-v="longo">Completo</button>
+      </div>
+    </div>
+    <button class="primary" id="btnResumir" onclick="gerarResumo()">Gerar resumo</button>
+    <div class="err" id="resErr"></div>
+  </div>
+  <!-- resultado -->
+  <div id="resView">
+    <div id="resBar">
+      <button class="voltar" onclick="voltarResCfg()">‹ Novo</button>
+      <button class="voltar" id="btnCopiar" onclick="copiarResumo()" style="margin-left:auto">Copiar</button>
+    </div>
+    <div id="resOut"></div>
+  </div>
 </section>
 
 <!-- ESTUDAR -->
@@ -215,6 +260,8 @@ let fmt='multipla', nq=5;
 const capsSel = new Set();
 let respTotal=0, respAcertos=0, respFeitas=0;
 let quizCaps=[], quizModo='normal';
+let extResumo='medio', resumoAtual='';
+const resCapsSel = new Set();
 const LS_STATS='insall_stats_v1', LS_ERR='insall_erros_v1';
 function lsGet(k,def){ try{ return JSON.parse(localStorage.getItem(k)) ?? def; }catch(e){ return def; } }
 function lsSet(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
@@ -225,6 +272,7 @@ function qidDe(it){ const s=(it.q||it.frente||'')+'|'+(it.pagina||''); let h=538
 
 async function boot(){
   renderCaps('');
+  renderResCaps('');
   $('segFmt').querySelectorAll('button').forEach(b=>b.onclick=()=>{
     $('segFmt').querySelectorAll('button').forEach(x=>x.classList.remove('on'));
     b.classList.add('on'); fmt=b.dataset.v;
@@ -233,20 +281,26 @@ async function boot(){
     $('segN').querySelectorAll('button').forEach(x=>x.classList.remove('on'));
     b.classList.add('on'); nq=parseInt(b.dataset.v);
   });
+  $('segExt').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    $('segExt').querySelectorAll('button').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on'); extResumo=b.dataset.v;
+  });
   const { data:{ session } } = await sb.auth.getSession();
   if (session) mostrarApp(); else mostrarLogin();
 }
 function mostrarLogin(){ $('login').style.display='flex'; $('tabs').style.display='none';
-  $('chat').style.display='none'; $('estudar').style.display='none'; $('btnSair').style.display='none'; }
+  $('chat').style.display='none'; $('resumo').style.display='none'; $('estudar').style.display='none';
+  $('btnSair').style.display='none'; }
 function mostrarApp(){ $('login').style.display='none'; $('tabs').style.display='flex';
   $('btnSair').style.display='block'; troca('consultar'); }
 function troca(qual){
-  const c=qual==='consultar';
-  $('chat').style.display=c?'flex':'none';
-  $('estudar').style.display=c?'none':'flex';
-  $('tabConsultar').classList.toggle('on',c);
-  $('tabEstudar').classList.toggle('on',!c);
-  if(!c) renderStats();
+  $('chat').style.display = qual==='consultar' ? 'flex' : 'none';
+  $('resumo').style.display = qual==='resumo' ? 'flex' : 'none';
+  $('estudar').style.display = qual==='estudar' ? 'flex' : 'none';
+  $('tabConsultar').classList.toggle('on', qual==='consultar');
+  $('tabResumo').classList.toggle('on', qual==='resumo');
+  $('tabEstudar').classList.toggle('on', qual==='estudar');
+  if(qual==='estudar') renderStats();
 }
 
 // ── capítulos (busca + checkboxes) ──
@@ -265,6 +319,24 @@ function toggleCap(n,on){ if(on) capsSel.add(n); else capsSel.delete(n); infoCap
 function infoCaps(){
   const arr=[...capsSel].sort((a,b)=>a-b);
   $('capSelInfo').textContent = arr.length ? `${arr.length} selecionado(s): cap. ${arr.join(', ')}` : 'nenhum capítulo selecionado';
+}
+
+// ── capítulos da aba Resumo (busca + checkboxes, estado próprio) ──
+function renderResCaps(filtro){
+  const f=(filtro||'').toLowerCase();
+  const lista=$('resCapLista');
+  const vis=CAPS.filter(c=> !f || ('cap '+c.n+' '+c.t).toLowerCase().includes(f));
+  lista.innerHTML = vis.slice(0,300).map(c=>`
+    <label class="capRow">
+      <input type="checkbox" value="${c.n}" ${resCapsSel.has(c.n)?'checked':''} onchange="toggleResCap(${c.n},this.checked)">
+      <span>Cap. ${c.n} — ${c.t}</span>
+    </label>`).join('') || '<div class="capRow"><span style="color:var(--muted)">nada encontrado</span></div>';
+}
+function filtraResCaps(v){ renderResCaps(v); }
+function toggleResCap(n,on){ if(on) resCapsSel.add(n); else resCapsSel.delete(n); infoResCaps(); }
+function infoResCaps(){
+  const arr=[...resCapsSel].sort((a,b)=>a-b);
+  $('resCapSelInfo').textContent = arr.length ? `${arr.length} selecionado(s): cap. ${arr.join(', ')}` : 'nenhum capítulo selecionado';
 }
 
 async function entrar(){
@@ -314,6 +386,48 @@ async function perguntar(ev){
     }
   }catch(e){ load.remove(); addMsg('Sem conexão com o servidor.','a'); }
   $('send').disabled=false;
+}
+
+// ── RESUMO (gerar síntese de capítulo(s) ou tema) ──
+function voltarResCfg(){ $('resView').style.display='none'; $('resCfg').style.display='flex'; }
+
+async function gerarResumo(){
+  $('resErr').textContent='';
+  const body={ extensao:extResumo };
+  if(resCapsSel.size){ body.capitulos=[...resCapsSel]; }
+  else{
+    const tema=$('resTemaInp').value.trim();
+    if(!tema){ $('resErr').textContent='Marque ao menos um capítulo ou digite um tema.'; return; }
+    body.tema=tema;
+  }
+  $('btnResumir').disabled=true;
+  const tk=await token(); if(!tk){ mostrarLogin(); return; }
+  $('resCfg').style.display='none'; $('resView').style.display='flex';
+  $('resOut').innerHTML='<div class="hint">Lendo o livro e preparando o resumo… (pode levar 20-40s)</div>';
+  try{
+    const r=await fetch(BACKEND+'/insall-resumo',{method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+tk},
+      body:JSON.stringify(body)});
+    const data=await r.json().catch(()=>({}));
+    if(!r.ok){ $('resOut').innerHTML='<div class="hint">'+esc(data.detail||'Erro ao gerar resumo.')+'</div>'; }
+    else{
+      resumoAtual = data.resumo || '';
+      $('resOut').innerHTML = resumoAtual
+        ? `<div class="resumoTxt">${fmtHtml(resumoAtual)}</div>`
+        : '<div class="hint">Sem resumo.</div>';
+      $('resOut').scrollTop=0;
+    }
+  }catch(e){ $('resOut').innerHTML='<div class="hint">Sem conexão com o servidor.</div>'; }
+  $('btnResumir').disabled=false;
+}
+
+function copiarResumo(){
+  if(!resumoAtual) return;
+  const btn=$('btnCopiar');
+  navigator.clipboard?.writeText(resumoAtual).then(()=>{
+    const old=btn.textContent; btn.textContent='Copiado!';
+    setTimeout(()=>{ btn.textContent=old; },1200);
+  });
 }
 
 // ── ESTUDAR (gerar + quiz interativo) ──
